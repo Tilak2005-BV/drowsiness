@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — DrowsyGuard{% endblock %}
+{% block content %}
+<div id="aov" class="alert-ov"></div>
+
+<div class="dash-hdr">
+  <div>
+    <div class="dash-greet">Good to see you, <em>{{ current_user.username }}</em></div>
+    <p style="font-size:.79rem;color:var(--t3);margin-top:3px">Real-time drowsiness monitoring · {{ current_user.total_sessions }} sessions logged</p>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="badge badge-violet" id="live-badge" style="display:none">
+      <span style="width:5px;height:5px;border-radius:50%;background:var(--danger);animation:blink 1s infinite;display:inline-block"></span>
+      LIVE
+    </span>
+    <a href="{{ url_for('profile') }}" class="btn btn-ghost btn-sm">Profile</a>
+  </div>
+</div>
+
+<div class="container" style="position:relative;z-index:1">
+  <!-- Stats -->
+  <div class="stats4" style="margin-top:20px">
+    <div class="stat-card">
+      <div class="stat-icon si-v"><i class="fa fa-camera-retro"></i></div>
+      <div><div class="stat-val">{{ current_user.total_sessions }}</div><div class="stat-lbl">Total Sessions</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon si-d"><i class="fa fa-bell"></i></div>
+      <div><div class="stat-val">{{ current_user.total_alerts }}</div><div class="stat-lbl">Lifetime Alerts</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon si-i"><i class="fa fa-clock"></i></div>
+      <div><div class="stat-val">{{ current_user.total_minutes }}</div><div class="stat-lbl">Mins Monitored</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon si-s"><i class="fa fa-shield-halved"></i></div>
+      <div><div class="stat-val" id="acnt">0</div><div class="stat-lbl">This Session</div></div>
+    </div>
+  </div>
+
+  <div class="dash-body">
+    <!-- Camera -->
+    <div>
+      <div class="cam-wrap" id="cwrap">
+        <video id="camera-feed" autoplay muted playsinline></video>
+        <canvas id="capture-canvas" style="display:none"></canvas>
+        <div class="cam-ov">
+          <div class="cam-top">
+            <div id="spill" class="s-pill sp-nf">
+              <div id="pdot" class="pdot"></div>
+              <span id="ptxt">NO FACE</span>
+            </div>
+            <div id="camrec" class="cam-rec">
+              <div class="rdot"></div>
+              <span id="stimer">00:00:00</span>
+            </div>
+          </div>
+        </div>
+        <div id="cstart" class="cam-start">
+          <div class="cs-icon">
+            <svg width="64" height="64" viewBox="0 0 34 34" fill="none">
+              <ellipse cx="17" cy="17" rx="13.5" ry="9" stroke="rgba(197,168,255,0.45)" stroke-width="1.5"/>
+              <circle cx="17" cy="17" r="5.5" fill="rgba(197,168,255,0.25)"/>
+              <circle cx="19" cy="15.3" r="2" fill="rgba(197,168,255,0.6)"/>
+            </svg>
+          </div>
+          <p class="cs-txt">Press <strong style="color:var(--lavender)">Start Session</strong> to begin<br>real-time drowsiness monitoring</p>
+        </div>
+      </div>
+
+      <div class="cam-ctrl" style="margin-bottom:20px">
+        <button id="btn-start" class="btn btn-primary btn-lg" style="border-radius:var(--r2)">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M3 2l8 4.5L3 11V2z" fill="currentColor"/></svg>
+          <span>Start Session</span>
+        </button>
+        <button id="btn-stop" class="btn btn-danger btn-lg" style="display:none;border-radius:var(--r2)">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="2" y="2" width="8" height="8" rx="1.5" fill="currentColor"/></svg>
+          <span>Stop Session</span>
+        </button>
+      </div>
+
+      {% if recent_sessions %}
+      <div class="card">
+        <div class="sec-hdr"><span class="sec-title">Recent Sessions</span></div>
+        <div style="overflow-x:auto">
+          <table class="dtable">
+            <thead><tr><th>Date & Time</th><th>Duration</th><th>Alerts</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for s in recent_sessions %}
+              <tr>
+                <td class="mono" style="font-size:.77rem">{{ s.start_time.strftime('%b %d, %Y · %H:%M') }}</td>
+                <td class="mono">{{ s.duration_str }}</td>
+                <td>{% if s.alert_count>0 %}<span class="badge badge-danger">{{ s.alert_count }}</span>{% else %}<span class="badge badge-success">Clean</span>{% endif %}</td>
+                <td><span class="badge badge-{{ 'violet' if s.status=='active' else 'ghost' }}">{{ s.status }}</span></td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% else %}
+      <div class="card" style="text-align:center;padding:44px">
+        <svg width="52" height="52" viewBox="0 0 34 34" fill="none" style="margin:0 auto 14px;opacity:.22">
+          <ellipse cx="17" cy="17" rx="13.5" ry="9" stroke="var(--lavender)" stroke-width="1.3"/>
+          <circle cx="17" cy="17" r="5" fill="var(--lavender)"/>
+        </svg>
+        <p style="font-size:.875rem">No sessions yet — start your first one above!</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Metrics -->
+    <div class="metrics-col">
+      <div class="metric-card">
+        <div class="m-hdr">
+          <span class="m-name">Session Timer</span>
+          <span class="badge badge-danger" id="live-b2" style="display:none">● LIVE</span>
+        </div>
+        <div class="s-clock" id="sclock">00:00:00</div>
+      </div>
+      <div class="metric-card">
+        <div class="m-hdr"><span class="m-name">Eye Aspect Ratio</span><span class="badge badge-violet">EAR</span></div>
+        <div id="ev" class="m-val">—</div>
+        <div class="bar-tr"><div id="eb" class="bar-fi g" style="width:0%"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:.7rem;color:var(--t3)">
+          <span>L: <span id="el" class="mono">—</span></span>
+          <span>R: <span id="er" class="mono">—</span></span>
+          <span>Threshold: 0.25</span>
+        </div>
+      </div>
+      <div class="metric-card">
+        <div class="m-hdr"><span class="m-name">Mouth Aspect Ratio</span><span class="badge badge-violet">MAR</span></div>
+        <div id="mv" class="m-val">—</div>
+        <div class="bar-tr"><div id="mb" class="bar-fi g" style="width:0%"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:.7rem;color:var(--t3)">
+          <span>Yawn &gt; 0.65</span><span>20 consec. frames</span>
+        </div>
+      </div>
+      <div class="metric-card">
+        <div class="m-hdr">
+          <span class="m-name">Alert Log</span>
+          <span class="badge badge-danger" id="ab">0</span>
+        </div>
+        <div id="alog" class="alert-log-w">
+          <p style="font-size:.76rem;color:var(--t3);text-align:center;padding:14px 0">No alerts this session</p>
+        </div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-lbl"><i class="fa fa-lightbulb fa-xs"></i> Safety Tip</div>
+        <p class="tip-txt" id="tip"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const tips=["Take a 20-min break every 2 hours on long drives.","If drowsy, pull over immediately. No destination is worth your life.","Caffeine helps short-term but is no substitute for sleep.","Drowsiness peaks 2–6 AM and 1–3 PM. Extra caution then.","Cool air and upright posture help maintain alertness."];
+document.getElementById('tip').textContent=tips[Math.floor(Math.random()*tips.length)];
+const ac=document.getElementById('acnt'),ab=document.getElementById('ab');
+new MutationObserver(()=>{if(ab)ab.textContent=ac.textContent}).observe(ac,{childList:true,characterData:true,subtree:true});
+window._setLive=on=>{
+  ['live-badge','live-b2'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=on?'inline-flex':'none'});
+  const cr=document.getElementById('camrec');if(cr)cr.style.display=on?'flex':'none';
+  const cw=document.getElementById('cwrap');if(cw)cw.classList.toggle('live',on);
+};
+</script>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

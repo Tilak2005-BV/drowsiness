@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}DrowsyGuard{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<div class="bg-nebula"></div>
+
+<div class="page-wrap">
+
+  {% if current_user.is_authenticated %}
+  <nav class="navbar">
+    <a href="{{ url_for('index') }}" class="nav-brand">
+      <svg class="brand-mark" width="34" height="34" viewBox="0 0 34 34" fill="none">
+        <rect width="34" height="34" rx="9" fill="url(#bg)"/>
+        <ellipse cx="17" cy="18" rx="10" ry="6.5" stroke="rgba(255,255,255,0.85)" stroke-width="1.4"/>
+        <circle cx="17" cy="18" r="3.8" fill="url(#fg)"/>
+        <circle cx="18.6" cy="16.6" r="1.3" fill="rgba(255,255,255,0.9)"/>
+        <path d="M7 18 Q17 9 27 18" stroke="rgba(255,255,255,0.25)" stroke-width="1.1" stroke-linecap="round" fill="none"/>
+        <defs>
+          <linearGradient id="bg" x1="0" y1="0" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#302B63"/>
+            <stop offset="100%" stop-color="#7B5EA7"/>
+          </linearGradient>
+          <linearGradient id="fg" x1="0" y1="0" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#C5A8FF"/>
+            <stop offset="100%" stop-color="#7B5EA7"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      DrowsyGuard
+    </a>
+
+    <div class="nav-links">
+      <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint=='dashboard' %}active{% endif %}">Dashboard</a>
+      <a href="{{ url_for('profile') }}"   class="nav-link {% if request.endpoint=='profile' %}active{% endif %}">Profile</a>
+    </div>
+
+    <div class="nav-right">
+      <span class="nav-uname">{{ current_user.username }}</span>
+      <a href="{{ url_for('profile') }}" style="display:flex">
+        {% if current_user.avatar %}
+          <img src="{{ current_user.avatar_url }}" alt="av" class="nav-av">
+        {% else %}
+          <div class="nav-av-init">{{ current_user.username[0].upper() }}</div>
+        {% endif %}
+      </a>
+      <a href="{{ url_for('logout') }}" class="btn btn-ghost btn-sm">
+        <i class="fa fa-arrow-right-from-bracket fa-sm"></i><span>Logout</span>
+      </a>
+    </div>
+  </nav>
+  {% endif %}
+
+  <div class="flash-wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="flash flash-{{ cat }}" onclick="this.remove()">
+          {% if cat=='success' %}<i class="fa fa-circle-check"></i>
+          {% elif cat=='error' %}<i class="fa fa-circle-xmark"></i>
+          {% elif cat=='warning' %}<i class="fa fa-triangle-exclamation"></i>
+          {% else %}<i class="fa fa-circle-info"></i>{% endif %}
+          {{ msg }}
+        </div>
+      {% endfor %}
+    {% endwith %}
+  </div>
+
+  <main>{% block content %}{% endblock %}</main>
+
+  {% if current_user.is_authenticated %}
+  <div class="glow-strip"></div>
+  <footer class="footer">
+    <div style="display:flex;align-items:center;gap:9px">
+      <svg width="18" height="18" viewBox="0 0 34 34" fill="none">
+        <rect width="34" height="34" rx="8" fill="url(#fbg)"/>
+        <ellipse cx="17" cy="18" rx="10" ry="6.5" stroke="rgba(255,255,255,0.8)" stroke-width="1.3"/>
+        <circle cx="17" cy="18" r="3.8" fill="url(#ffg)"/>
+        <defs>
+          <linearGradient id="fbg" x1="0" y1="0" x2="34" y2="34"><stop offset="0%" stop-color="#302B63"/><stop offset="100%" stop-color="#7B5EA7"/></linearGradient>
+          <linearGradient id="ffg" x1="0" y1="0" x2="34" y2="34"><stop offset="0%" stop-color="#C5A8FF"/><stop offset="100%" stop-color="#7B5EA7"/></linearGradient>
+        </defs>
+      </svg>
+      DrowsyGuard
+    </div>
+    <span>Flask · MediaPipe · OpenCV · Real-time Drowsiness Detection</span>
+  </footer>
+  {% endif %}
+</div>
+
+<script>
+/* Flash auto-dismiss */
+document.querySelectorAll('.flash').forEach(el=>{
+  const go=()=>{el.style.animation='fslide .28s ease reverse';setTimeout(()=>el.remove(),280)};
+  setTimeout(go,5000);
+  el.addEventListener('click',go);
+});
+/* Scroll reveal */
+const ro=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');ro.unobserve(e.target)}});
+},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>ro.observe(el));
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

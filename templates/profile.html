@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% block title %}Profile — {{ current_user.username }}{% endblock %}
+{% block content %}
+<div class="p-hero">
+  <div class="container">
+    <div class="p-inner">
+      <div class="pav-w">
+        {% if current_user.avatar %}
+          <img src="{{ current_user.avatar_url }}" alt="av" class="pav" id="avp">
+        {% else %}
+          <div class="pav-init" id="avp">{{ current_user.username[0].upper() }}</div>
+        {% endif %}
+        <button class="pav-edit" onclick="document.getElementById('avf').click()">
+          <i class="fa fa-camera" style="font-size:.7rem"></i>
+        </button>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div class="p-name">{{ current_user.full_name or current_user.username }}</div>
+        <div class="p-handle">@{{ current_user.username }} · Member since {{ current_user.member_since }}</div>
+        <div class="p-bio">{{ current_user.bio or 'No bio yet — add one below.' }}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">
+          <span class="badge badge-violet"><i class="fa fa-envelope fa-xs"></i> {{ current_user.email }}</span>
+          <span class="badge badge-ghost">{{ current_user.total_sessions }} sessions</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:32px;text-align:center;padding-bottom:8px;flex-shrink:0">
+        <div>
+          <div style="font-family:var(--f-display);font-size:2.2rem;font-weight:900;background:linear-gradient(135deg,var(--white),var(--lavender));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1">{{ current_user.total_sessions }}</div>
+          <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);margin-top:3px">Sessions</div>
+        </div>
+        <div>
+          <div style="font-family:var(--f-display);font-size:2.2rem;font-weight:900;color:var(--danger);line-height:1">{{ current_user.total_alerts }}</div>
+          <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);margin-top:3px">Alerts</div>
+        </div>
+        <div>
+          <div style="font-family:var(--f-display);font-size:2.2rem;font-weight:900;color:var(--t1);line-height:1">{{ current_user.total_minutes }}</div>
+          <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);margin-top:3px">Minutes</div>
+        </div>
+      </div>
+    </div>
+    <div class="p-tabs">
+      <button class="ptab active" onclick="showTab('info',this)">Personal Info</button>
+      <button class="ptab" onclick="showTab('pw',this)">Password</button>
+      <button class="ptab" onclick="showTab('sess',this)">Sessions</button>
+    </div>
+  </div>
+</div>
+
+<div class="container" style="position:relative;z-index:1">
+  <div class="p-body">
+    <div>
+      <!-- Info tab -->
+      <div id="tab-info">
+        <div class="card" style="margin-bottom:20px">
+          <div class="sec-hdr"><span class="sec-title">Personal Information</span></div>
+          <form method="POST" action="{{ url_for('profile') }}" enctype="multipart/form-data" id="iform">
+            <input type="hidden" name="action" value="update_info">
+            <input type="file" id="avf" name="avatar" accept="image/*" style="display:none" onchange="prevAv(event)">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" name="full_name" class="form-input" value="{{ current_user.full_name or '' }}" placeholder="Your name">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Username</label>
+                <input class="form-input" value="{{ current_user.username }}" disabled style="opacity:.38;cursor:not-allowed">
+                <p class="form-hint">Cannot be changed</p>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <div class="iw"><i class="fa fa-envelope ii"></i><input type="email" name="email" class="form-input ico" value="{{ current_user.email }}" required></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Bio</label>
+              <textarea name="bio" class="form-textarea" placeholder="Tell us about yourself…">{{ current_user.bio or '' }}</textarea>
+            </div>
+            <div style="display:flex;gap:10px">
+              <button type="submit" class="btn btn-primary"><i class="fa fa-floppy-disk fa-sm"></i><span>Save Changes</span></button>
+              <button type="button" class="btn btn-outline" onclick="document.getElementById('avf').click()"><i class="fa fa-camera fa-sm"></i><span>Change Avatar</span></button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Password tab -->
+      <div id="tab-pw" style="display:none">
+        <div class="card">
+          <div class="sec-hdr"><span class="sec-title">Change Password</span></div>
+          <form method="POST" action="{{ url_for('profile') }}">
+            <input type="hidden" name="action" value="change_password">
+            <div class="form-group">
+              <label class="form-label">Current Password</label>
+              <input type="password" name="old_password" class="form-input" placeholder="••••••••" required>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div class="form-group">
+                <label class="form-label">New Password</label>
+                <input type="password" name="new_password" id="np" class="form-input" placeholder="Min 6 chars" required oninput="pm()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Confirm New</label>
+                <input type="password" name="confirm_new_password" id="cp" class="form-input" placeholder="Repeat" required oninput="pm()">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-outline"><i class="fa fa-lock fa-sm"></i><span>Update Password</span></button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Sessions tab -->
+      <div id="tab-sess" style="display:none">
+        <div class="card">
+          <div class="sec-hdr">
+            <span class="sec-title">Session History</span>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-sm">
+              <svg width="11" height="11" viewBox="0 0 13 13" fill="none"><path d="M3 2l8 4.5L3 11V2z" fill="currentColor"/></svg><span>New</span>
+            </a>
+          </div>
+          {% if sessions %}
+          <table class="dtable">
+            <thead><tr><th>Date</th><th>Duration</th><th>Alerts</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for s in sessions %}
+              <tr>
+                <td class="mono" style="font-size:.76rem">{{ s.start_time.strftime('%b %d, %Y · %H:%M') }}</td>
+                <td class="mono">{{ s.duration_str }}</td>
+                <td>{% if s.alert_count>0 %}<span class="badge badge-danger">{{ s.alert_count }}</span>{% else %}<span class="badge badge-success">Clean</span>{% endif %}</td>
+                <td><span class="badge badge-ghost">{{ s.status }}</span></td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <div style="text-align:center;padding:40px;color:var(--t3)">
+            <p style="font-size:.875rem;margin-bottom:16px">No sessions yet.</p>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-sm">Start monitoring</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right sidebar -->
+    <div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="sec-hdr"><span class="sec-title">Statistics</span></div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="stat-card" style="border-radius:var(--r2)">
+            <div class="stat-icon si-v"><i class="fa fa-camera-retro"></i></div>
+            <div><div class="stat-val">{{ current_user.total_sessions }}</div><div class="stat-lbl">Sessions</div></div>
+          </div>
+          <div class="stat-card" style="border-radius:var(--r2)">
+            <div class="stat-icon si-d"><i class="fa fa-bell"></i></div>
+            <div><div class="stat-val">{{ current_user.total_alerts }}</div><div class="stat-lbl">Total Alerts</div></div>
+          </div>
+          <div class="stat-card" style="border-radius:var(--r2)">
+            <div class="stat-icon si-i"><i class="fa fa-clock"></i></div>
+            <div><div class="stat-val">{{ current_user.total_minutes }}</div><div class="stat-lbl">Mins Monitored</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="background:rgba(255,77,109,.07);border-color:rgba(255,77,109,.2)">
+        <p class="label" style="color:var(--danger);margin-bottom:10px">Account</p>
+        <p style="font-size:.81rem;margin-bottom:14px;color:var(--t2);line-height:1.6">Sign out of DrowsyGuard on this device.</p>
+        <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm"><i class="fa fa-arrow-right-from-bracket fa-sm"></i><span>Sign out</span></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showTab(n,btn){
+  ['info','pw','sess'].forEach(t=>document.getElementById('tab-'+t).style.display=t===n?'':'none');
+  document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function prevAv(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const p=document.getElementById('avp');
+    if(p.tagName==='IMG')p.src=ev.target.result;
+    else{const i=document.createElement('img');i.src=ev.target.result;i.id='avp';i.alt='av';i.className='pav';p.replaceWith(i)}
+  };
+  r.readAsDataURL(f);
+  document.getElementById('iform').submit();
+}
+function pm(){
+  const p=document.getElementById('cp');
+  const ok=document.getElementById('np').value===p.value;
+  p.style.borderColor=p.value?(ok?'var(--success)':'var(--danger)'):'';
+}
+</script>
+{% endblock %}

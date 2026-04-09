@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}Create Account — DrowsyGuard{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div class="auth-panel">
+    <a href="{{ url_for('index') }}" class="auth-logo">
+      <svg width="30" height="30" viewBox="0 0 34 34" fill="none">
+        <rect width="34" height="34" rx="9" fill="url(#rp1)"/>
+        <ellipse cx="17" cy="18" rx="10" ry="6.5" stroke="rgba(255,255,255,0.85)" stroke-width="1.4"/>
+        <circle cx="17" cy="18" r="3.8" fill="url(#rp2)"/>
+        <circle cx="18.6" cy="16.6" r="1.3" fill="rgba(255,255,255,0.9)"/>
+        <defs>
+          <linearGradient id="rp1" x1="0" y1="0" x2="34" y2="34" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#302B63"/><stop offset="100%" stop-color="#7B5EA7"/></linearGradient>
+          <linearGradient id="rp2" x1="0" y1="0" x2="34" y2="34" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#C5A8FF"/><stop offset="100%" stop-color="#7B5EA7"/></linearGradient>
+        </defs>
+      </svg>
+      DrowsyGuard
+    </a>
+    <div>
+      <h2 class="auth-hl">Join the<br><span>safety</span><br>mission.</h2>
+      <div class="auth-feats">
+        <div class="auth-feat"><div class="afd"></div>Free forever — no credit card needed</div>
+        <div class="auth-feat"><div class="afd"></div>Set up in under 60 seconds</div>
+        <div class="auth-feat"><div class="afd"></div>Works in any modern browser</div>
+        <div class="auth-feat"><div class="afd"></div>Track sessions & analytics over time</div>
+      </div>
+    </div>
+    <p class="auth-foot">© 2026 DrowsyGuard. All rights reserved.</p>
+  </div>
+
+  <div class="auth-main">
+    <div class="auth-card" style="max-width:460px">
+      <h2 class="auth-t">Create<br><span>account.</span></h2>
+      <p class="auth-sub">Start monitoring your alertness in seconds</p>
+
+      <form method="POST" action="{{ url_for('register') }}" id="rf">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="form-group">
+            <label class="form-label">Full name</label>
+            <input type="text" name="full_name" class="form-input" placeholdesr="your_name" autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Username <span style="color:var(--danger)">*</span></label>
+            <input type="text" name="username" class="form-input" placeholder="username" required autocomplete="username">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email <span style="color:var(--danger)">*</span></label>
+          <div class="iw"><i class="fa fa-envelope ii"></i><input type="email" name="email" class="form-input ico" placeholder="you@example.com" required autocomplete="email"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="form-group">
+            <label class="form-label">Password <span style="color:var(--danger)">*</span></label>
+            <input type="password" name="password" id="p1" class="form-input" placeholder="Min 6 chars" required oninput="chkStr(this.value)">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm <span style="color:var(--danger)">*</span></label>
+            <input type="password" name="confirm_password" id="p2" class="form-input" placeholder="Repeat" required oninput="chkMatch()">
+          </div>
+        </div>
+        <div style="margin:-4px 0 18px">
+          <div style="height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;margin-bottom:5px">
+            <div id="sb" style="height:100%;width:0%;border-radius:2px;transition:all .3s"></div>
+          </div>
+          <span id="sl" style="font-size:.71rem;color:var(--t3)"></span>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full btn-lg" style="border-radius:var(--r2)">
+          <span>Create account</span>
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5h9M7.5 2.5l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </form>
+      <p style="text-align:center;font-size:.875rem;color:var(--t2);margin-top:20px">
+        Have an account? <a href="{{ url_for('login') }}" style="color:var(--lavender);font-weight:600">Sign in →</a>
+      </p>
+    </div>
+  </div>
+</div>
+<script>
+function chkStr(v){
+  const b=document.getElementById('sb'),l=document.getElementById('sl');
+  let s=0;
+  if(v.length>=6)s++;if(v.length>=10)s++;
+  if(/[A-Z]/.test(v))s++;if(/[0-9]/.test(v))s++;if(/[^A-Za-z0-9]/.test(v))s++;
+  const m=[{w:'0%',c:'transparent',t:''},{w:'25%',c:'var(--danger)',t:'Weak'},{w:'50%',c:'var(--warning)',t:'Fair'},{w:'75%',c:'#8B7FD4',t:'Good'},{w:'100%',c:'var(--success)',t:'Strong ✓'}];
+  const x=m[Math.min(s,4)];b.style.width=x.w;b.style.background=x.c;l.textContent=x.t;l.style.color=x.c;
+}
+function chkMatch(){
+  const p=document.getElementById('p2');
+  const ok=document.getElementById('p1').value===p.value;
+  p.style.borderColor=p.value?(ok?'var(--success)':'var(--danger)'):'';
+}
+document.getElementById('rf').addEventListener('submit',e=>{
+  if(document.getElementById('p1').value!==document.getElementById('p2').value){
+    e.preventDefault();
+    const p=document.getElementById('p2');
+    p.style.borderColor='var(--danger)';p.style.boxShadow='0 0 0 3px var(--danger-d)';
+    setTimeout(()=>{p.style.borderColor='';p.style.boxShadow=''},2200);
+  }
+});
+</script>
+{% endblock %}
